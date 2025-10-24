@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Immeubles Pro</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body { padding: 20px; }
+.table-container { max-height: 400px; overflow-y: auto; }
+#tenantsTable tbody tr:nth-child(odd) { background-color: #f8f9fa; }
+#tenantsTable tbody tr:nth-child(even) { background-color: #ffffff; }
+#tenantsTable tbody tr:hover { background-color: #d1ecf1; }
+th { cursor: pointer; }
+th.sorted-asc::after { content: " ▲"; }
+th.sorted-desc::after { content: " ▼"; }
+select { min-width: 120px; }
+@media print {
+    body * { visibility: hidden; }
+    #tenantsTable, #tenantsTable * { visibility: visible; }
+    #tenantsTable { position: absolute; top: 0; left: 0; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="mb-3">Gestion Immeubles et Locataires Pro</h2>
+
+    <!-- Dashboard -->
+    <div class="row mb-3" id="dashboard">
+        <div class="col-md-4 mb-2">
+            <div class="card text-bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Locataires</h5>
+                    <p class="card-text" id="totalTenants">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card text-bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Loyers Payés</h5>
+                    <p class="card-text" id="totalPaid">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card text-bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Loyers En Retard</h5>
+                    <p class="card-text" id="totalLate">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="selectBuilding" class="form-label">Immeuble :</label>
+        <select id="selectBuilding" class="form-select"></select>
+        <button id="btnAddBuilding" class="btn btn-success mt-2">Ajouter Immeuble</button>
+    </div>
+
+    <div class="mb-3">
+        <label for="selectApartment" class="form-label">Appartement :</label>
+        <select id="selectApartment" class="form-select"></select>
+        <button id="btnAddApartment" class="btn btn-success mt-2">Ajouter Appartement</button>
+    </div>
+
+    <div class="mb-3">
+        <input id="searchInput" class="form-control" placeholder="Recherche par locataire, statut ou appartement">
+    </div>
+
+    <div class="table-container mb-3">
+        <table class="table table-bordered table-striped" id="tenantsTable">
+            <thead class="table-dark">
+                <tr>
+                    <th data-col="name">Locataire</th>
+                    <th data-col="rent">Loyer</th>
+                    <th data-col="date">Date Paiement</th>
+                    <th data-col="status">Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <button id="btnAddTenant" class="btn btn-primary">Ajouter un locataire</button>
+    <button id="btnPrint" class="btn btn-secondary">Imprimer</button>
+    <button id="btnExportPDF" class="btn btn-danger">Exporter en PDF</button>
+</div>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+let sampleData = [
+    { id: 1, nom: "Immeuble A", appartements: [
+        { id: 1, name: "Apt 101", tenants: [
+            { name: "Alice", rent: 500, date: "2025-10-01", status: "Payé" },
+            { name: "Bob", rent: 450, date: "2025-10-05", status: "En retard" }
+        ] }
+    ] }
+];
+
+let data = JSON.parse(localStorage.getItem('gestionData')) || sampleData;
+let selectedBuildingId = data[0]?.id || null;
+let selectedApartmentId = data[0]?.appartements?.[0]?.id || null;
+let currentSort = { col: null, asc: true };
+
+function saveData(d){ localStorage.setItem('gestionData', JSON.stringify(d)); }
+function findBuilding(id){ return data.find(b=>b.id===id); }
+function findApartment(b,aid){ return b.appartements.find(a=>a.id===aid); }
+
+function renderSelects(){
+    const sb = document.getElementById('selectBuilding');
+    const sa = document.getElementById('selectApartment');
+    sb.innerHTML = ''; sa.innerHTML = '';
+    data.forEach(b=>{
+        const opt = document.createElement('option'); opt.value=b.id; opt.textContent=b.nom; if(b.id===selectedBuildingId) opt.selected=true;
+        sb.appendChild(opt);
+    });
+    const building = findBuilding(selectedBuildingId);
+    if(building){
+        building.appartements.forEach(a=>{
+            const opt = document.createElement('option'); opt.value=a.id; opt.textContent=a.name; if(a.id===selectedApartmentId) opt.selected=true;
+            sa.appendChild(opt);
+        });
+    }
+}
+
+function renderDashboard(){
+    if(!selectedBuildingId || !selectedApartmentId) return;
+    const building = findBuilding(selectedBuildingId);
+    const apartment = findApartment(building, selectedApartmentId);
+    let tenants = apartment.tenants;
+    let totalTenants = tenants.length;
+    let totalPaid = tenants.filter(t=>t.status==="Payé").reduce((sum,t)=>sum+Number(t.rent),0);
+    let totalLate = tenants.filter(t=>t.status==="En retard").reduce((sum,t)=>sum+Number(t.rent),0);
+    document.getElementById('totalTenants').textContent = totalTenants;
+    document.getElementById('totalPaid').textContent = totalPaid;
+    document.getElementById('totalLate').textContent = totalLate;
+}
+
+function renderTenantsTable(filter=""){
+    const tbody = document.querySelector('#tenantsTable tbody');
+    tbody.innerHTML = '';
+    if(!selectedBuildingId || !selectedApartmentId) return;
+    const building = findBuilding(selectedBuildingId);
+    const apartment = findApartment(building, selectedApartmentId);
+    let tenants = apartment.tenants.filter(t=>`${t.name} ${t.status} ${apartment.name}`.toLowerCase().includes(filter.toLowerCase()));
+
+    if(currentSort.col){
+        tenants.sort((a,b)=>{
+            let valA = a[currentSort.col], valB = b[currentSort.col];
+            if(typeof valA==="string") valA=valA.toLowerCase();
+            if(typeof valB==="string") valB=valB.toLowerCase();
+            if(valA < valB) return currentSort.asc?-1:1;
+            if(valA > valB) return currentSort.asc?1:-1;
+            return 0;
+        });
+    }
+
+    tenants.forEach((t,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input class="form-control form-control-sm" value="${t.name}"></td>
+            <td><input class="form-control form-control-sm" value="${t.rent}"></td>
+            <td>
+                <select class="form-select form-select-sm">
+                    <option value="2025-10-01" ${t.date==="2025-10-01"?'selected':''}>2025-10-01</option>
+                    <option value="2025-10-05" ${t.date==="2025-10-05"?'selected':''}>2025-10-05</option>
+                    <option value="2025-10-10" ${t.date==="2025-10-10"?'selected':''}>2025-10-10</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm">
+                    <option value="Payé" ${t.status==="Payé"?'selected':''}>Payé</option>
+                    <option value="En retard" ${t.status==="En retard"?'selected':''}>En retard</option>
+                </select>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-success">✔</button>
+                <button class="btn btn-sm btn-danger">✖</button>
+            </td>`;
+        tr.querySelector('button.btn-success').onclick = ()=>{
+            t.name = tr.children[0].firstChild.value;
+            t.rent = tr.children[1].firstChild.value;
+            t.date = tr.children[2].firstChild.value;
+            t.status = tr.children[3].firstChild.value;
+            saveData(data);
+            renderAll(filter);
+        };
+        tr.querySelector('button.btn-danger').onclick = ()=>{
+            if(confirm("Supprimer ce locataire ?")){
+                apartment.tenants.splice(i,1);
+                saveData(data);
+                renderAll(filter);
+            }
+        };
+        tbody.appendChild(tr);
+    });
+    renderDashboard();
+}
+
+function renderAll(filter=""){ renderSelects(); renderTenantsTable(filter); }
+
+// Selects change
+document.getElementById('selectBuilding').onchange = e=>{
+    selectedBuildingId = parseInt(e.target.value);
+    selectedApartmentId = findBuilding(selectedBuildingId).appartements[0]?.id || null;
+    renderAll(document.getElementById('searchInput').value);
+};
+document.getElementById('selectApartment').onchange = e=>{
+    selectedApartmentId = parseInt(e.target.value);
+    renderAll(document.getElementById('searchInput').value);
+};
+
+// Add building/apartment/tenant
+document.getElementById('btnAddBuilding').onclick = ()=>{
+    const name = prompt("Nom de l'immeuble :"); if(!name) return;
+    const id = Date.now();
+    data.push({ id, nom: name, appartements: [] }); saveData(data); selectedBuildingId=id;
+    renderAll();
+};
+document.getElementById('btnAddApartment').onclick = ()=>{
+    const name = prompt("Nom de l'appartement :"); if(!name) return;
+    const building = findBuilding(selectedBuildingId); const id = Date.now();
+    building.appartements.push({ id, name, tenants: [] }); saveData(data); selectedApartmentId=id;
+    renderAll();
+};
+document.getElementById('btnAddTenant').onclick = ()=>{
+    if(!selectedBuildingId || !selectedApartmentId) return alert("Sélectionnez immeuble et appartement");
+    const name = prompt("Nom du locataire :"); if(!name) return;
+    const rent = prompt("Montant du loyer :");
+    const date = prompt("Date de paiement :");
+    const status = prompt("Statut :");
+    const building = findBuilding(selectedBuildingId);
+    const apartment = findApartment(building, selectedApartmentId);
+    apartment.tenants.push({ name,rent,date,status }); saveData(data); renderAll(document.getElementById('searchInput').value);
+};
+
+// Search filter instantané
+document.getElementById('searchInput').oninput = e=> renderAll(e.target.value);
+
+// Column sort
+document.querySelectorAll('#tenantsTable th[data-col]').forEach(th=>{
+    th.onclick = ()=>{
+        const col = th.getAttribute('data-col');
+        if(currentSort.col===col) currentSort.asc = !currentSort.asc;
+        else { currentSort.col = col; currentSort.asc = true; }
+        document.querySelectorAll('#tenantsTable th').forEach(h=>h.classList.remove('sorted-asc','sorted-desc'));
+        th.classList.add(currentSort.asc?'sorted-asc':'sorted-desc');
+        renderTenantsTable(document.getElementById('searchInput').value);
+    };
+});
+
+// Print
+document.getElementById('btnPrint').onclick = ()=> window.print();
+
+// Export PDF
+document.getElementById('btnExportPDF').onclick = ()=>{
+    const doc = new jsPDF({unit:'pt', format:'a4'});
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+    if(!selectedBuildingId || !selectedApartmentId) return alert("Sélectionnez un immeuble et un appartement");
+    const building = findBuilding(selectedBuildingId);
+    const apartment = findApartment(building, selectedApartmentId);
+
+    let tenants = apartment.tenants.filter(t=>`${t.name} ${t.status} ${apartment.name}`.toLowerCase().includes(filter));
+
+    const colWidths = [150, 80, 100, 80]; let y=40;
+
+    doc.setFontSize(16); doc.setFont('helvetica','bold');
+    doc.text(`Locataires - ${apartment.name} (${building.nom})`,40,y); y+=30;
+
+    doc.setFontSize(12); doc.setFont('helvetica','bold');
+    const headers=["Locataire","Loyer","Date","Statut"]; let x=40;
+    doc.setFillColor(52,58,64); doc.rect(x-5, y-12, colWidths.reduce((a,b)=>a+b,0)+20, 20,'F');
+    headers.forEach((h,i)=>{ doc.setTextColor(255,255,255); doc.text(h,x,y); x+=colWidths[i]; });
+    y+=20; doc.setLineWidth(0.5); doc.line(40, y-5, 40+colWidths.reduce((a,b)=>a+b,0), y-5);
+
+    doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
+    tenants.forEach((t,i)=>{
+        let x=40; if(i%2) doc.setFillColor(248,249,250); else doc.setFillColor(255,255,255);
+        doc.rect(x-5, y-12, colWidths.reduce((a,b)=>a+b,0)+20, 18,'F');
+        [t.name,t.rent,t.date,t.status].forEach((v,idx)=>{ doc.text(String(v),x,y); x+=colWidths[idx]; });
+        y+=20; if(y>750){ doc.addPage(); y=40; }
+    });
+    doc.save(`locataires_${apartment.name}.pdf`);
+};
+
+// Initial render
+renderAll();
+</script>
+</body>
+</html>
