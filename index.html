@@ -8,14 +8,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body { padding: 20px; }
-.table-container { max-height: 400px; overflow-y: auto; }
+.table-container { max-height: 400px; overflow-y: auto; margin-top:20px; }
 #tenantsTable tbody tr:nth-child(odd) { background-color: #f8f9fa; }
 #tenantsTable tbody tr:nth-child(even) { background-color: #ffffff; }
 #tenantsTable tbody tr:hover { background-color: #d1ecf1; }
 th { cursor: pointer; }
 th.sorted-asc::after { content: " ▲"; }
 th.sorted-desc::after { content: " ▼"; }
-select { min-width: 120px; }
+select, input { min-width: 120px; }
+.logo { max-height: 60px; margin-bottom: 15px; }
 @media print {
     body * { visibility: hidden; }
     #tenantsTable, #tenantsTable * { visibility: visible; }
@@ -26,6 +27,7 @@ select { min-width: 120px; }
 <body>
 
 <div class="container">
+    <img src="data:image/jpeg;base64,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" alt="Logo" class="logo">
     <h2 class="mb-3">Gestion Immeubles et Locataires Pro</h2>
 
     <!-- Dashboard -->
@@ -56,22 +58,24 @@ select { min-width: 120px; }
         </div>
     </div>
 
+    <!-- Gestion immeubles et unités -->
     <div class="mb-3">
         <label for="selectBuilding" class="form-label">Immeuble :</label>
         <select id="selectBuilding" class="form-select"></select>
-        <button id="btnAddBuilding" class="btn btn-success mt-2">Ajouter Immeuble</button>
+        <button class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#modalBuilding">Ajouter Immeuble</button>
     </div>
 
     <div class="mb-3">
-        <label for="selectApartment" class="form-label">Appartement :</label>
-        <select id="selectApartment" class="form-select"></select>
-        <button id="btnAddApartment" class="btn btn-success mt-2">Ajouter Appartement</button>
+        <label for="selectUnit" class="form-label">Unité :</label>
+        <select id="selectUnit" class="form-select"></select>
+        <button class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#modalUnit">Ajouter Unité</button>
     </div>
 
     <div class="mb-3">
-        <input id="searchInput" class="form-control" placeholder="Recherche par locataire, statut ou appartement">
+        <input id="searchInput" class="form-control" placeholder="Recherche par locataire, statut ou unité">
     </div>
 
+    <!-- Table locataires -->
     <div class="table-container mb-3">
         <table class="table table-bordered table-striped" id="tenantsTable">
             <thead class="table-dark">
@@ -79,6 +83,7 @@ select { min-width: 120px; }
                     <th data-col="name">Locataire</th>
                     <th data-col="rent">Loyer</th>
                     <th data-col="date">Date Paiement</th>
+                    <th data-col="paymentMode">Mode Paiement</th>
                     <th data-col="status">Statut</th>
                     <th>Actions</th>
                 </tr>
@@ -87,117 +92,161 @@ select { min-width: 120px; }
         </table>
     </div>
 
-    <button id="btnAddTenant" class="btn btn-primary">Ajouter un locataire</button>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTenant">Ajouter un locataire</button>
     <button id="btnPrint" class="btn btn-secondary">Imprimer</button>
     <button id="btnExportPDF" class="btn btn-danger">Exporter en PDF</button>
 </div>
 
+<!-- Modale Immeuble -->
+<div class="modal fade" id="modalBuilding" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Ajouter Immeuble</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="text" id="inputBuildingName" class="form-control" placeholder="Nom de l'immeuble">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="saveBuilding">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Unité -->
+<div class="modal fade" id="modalUnit" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Ajouter Unité</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="text" id="inputUnitName" class="form-control mb-2" placeholder="Nom de l'unité">
+        <select id="inputUnitType" class="form-select">
+            <option>Appartement</option>
+            <option>Studio</option>
+            <option>Magasin</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="saveUnit">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Locataire -->
+<div class="modal fade" id="modalTenant" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Ajouter Locataire</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="text" id="inputTenantName" class="form-control mb-2" placeholder="Nom">
+        <input type="number" id="inputTenantRent" class="form-control mb-2" placeholder="Loyer">
+        <input type="date" id="inputTenantDate" class="form-control mb-2">
+        <select id="inputTenantPaymentMode" class="form-select mb-2">
+            <option>Espèces</option>
+            <option>Wave</option>
+            <option>Orange Money</option>
+        </select>
+        <select id="inputTenantStatus" class="form-select">
+            <option>Payé</option>
+            <option>En retard</option>
+            <option>Non payé</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="saveTenant">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const { jsPDF } = window.jspdf;
-
-let sampleData = [
-    { id: 1, nom: "Immeuble A", appartements: [
-        { id: 1, name: "Apt 101", tenants: [
-            { name: "Alice", rent: 500, date: "2025-10-01", status: "Payé" },
-            { name: "Bob", rent: 450, date: "2025-10-05", status: "En retard" }
-        ] }
-    ] }
-];
-
-let data = JSON.parse(localStorage.getItem('gestionData')) || sampleData;
+let data = JSON.parse(localStorage.getItem('gestionData')) || [];
 let selectedBuildingId = data[0]?.id || null;
-let selectedApartmentId = data[0]?.appartements?.[0]?.id || null;
-let currentSort = { col: null, asc: true };
+let selectedUnitId = data[0]?.unites?.[0]?.id || null;
+let currentSort = { col:null, asc:true };
 
-function saveData(d){ localStorage.setItem('gestionData', JSON.stringify(d)); }
+function saveData(){ localStorage.setItem('gestionData', JSON.stringify(data)); }
 function findBuilding(id){ return data.find(b=>b.id===id); }
-function findApartment(b,aid){ return b.appartements.find(a=>a.id===aid); }
+function findUnit(bid, uid){ return findBuilding(bid).unites.find(u=>u.id===uid); }
 
 function renderSelects(){
-    const sb = document.getElementById('selectBuilding');
-    const sa = document.getElementById('selectApartment');
-    sb.innerHTML = ''; sa.innerHTML = '';
+    const sb=document.getElementById('selectBuilding');
+    const su=document.getElementById('selectUnit');
+    sb.innerHTML=''; su.innerHTML='';
     data.forEach(b=>{
-        const opt = document.createElement('option'); opt.value=b.id; opt.textContent=b.nom; if(b.id===selectedBuildingId) opt.selected=true;
-        sb.appendChild(opt);
+        const opt=document.createElement('option'); opt.value=b.id; opt.textContent=b.nom;
+        if(b.id===selectedBuildingId) opt.selected=true; sb.appendChild(opt);
     });
-    const building = findBuilding(selectedBuildingId);
+    const building=findBuilding(selectedBuildingId);
     if(building){
-        building.appartements.forEach(a=>{
-            const opt = document.createElement('option'); opt.value=a.id; opt.textContent=a.name; if(a.id===selectedApartmentId) opt.selected=true;
-            sa.appendChild(opt);
+        building.unites.forEach(u=>{
+            const opt=document.createElement('option'); opt.value=u.id; opt.textContent=u.nom;
+            if(u.id===selectedUnitId) opt.selected=true; su.appendChild(opt);
         });
     }
 }
 
 function renderDashboard(){
-    if(!selectedBuildingId || !selectedApartmentId) return;
-    const building = findBuilding(selectedBuildingId);
-    const apartment = findApartment(building, selectedApartmentId);
-    let tenants = apartment.tenants;
-    let totalTenants = tenants.length;
-    let totalPaid = tenants.filter(t=>t.status==="Payé").reduce((sum,t)=>sum+Number(t.rent),0);
-    let totalLate = tenants.filter(t=>t.status==="En retard").reduce((sum,t)=>sum+Number(t.rent),0);
-    document.getElementById('totalTenants').textContent = totalTenants;
-    document.getElementById('totalPaid').textContent = totalPaid;
-    document.getElementById('totalLate').textContent = totalLate;
+    if(!selectedBuildingId||!selectedUnitId) return;
+    const unit=findUnit(selectedBuildingId, selectedUnitId);
+    const tenants = unit.tenants;
+    document.getElementById('totalTenants').textContent = tenants.length;
+    document.getElementById('totalPaid').textContent = tenants.filter(t=>t.status==="Payé").reduce((s,t)=>s+Number(t.rent),0);
+    document.getElementById('totalLate').textContent = tenants.filter(t=>t.status==="En retard").reduce((s,t)=>s+Number(t.rent),0);
 }
 
 function renderTenantsTable(filter=""){
-    const tbody = document.querySelector('#tenantsTable tbody');
-    tbody.innerHTML = '';
-    if(!selectedBuildingId || !selectedApartmentId) return;
-    const building = findBuilding(selectedBuildingId);
-    const apartment = findApartment(building, selectedApartmentId);
-    let tenants = apartment.tenants.filter(t=>`${t.name} ${t.status} ${apartment.name}`.toLowerCase().includes(filter.toLowerCase()));
+    const tbody=document.querySelector('#tenantsTable tbody'); tbody.innerHTML='';
+    if(!selectedBuildingId||!selectedUnitId) return;
+    const unit=findUnit(selectedBuildingId, selectedUnitId);
+    let tenants = unit.tenants.filter(t=>`${t.name} ${t.status} ${unit.nom}`.toLowerCase().includes(filter.toLowerCase()));
 
     if(currentSort.col){
         tenants.sort((a,b)=>{
-            let valA = a[currentSort.col], valB = b[currentSort.col];
+            let valA=a[currentSort.col], valB=b[currentSort.col];
             if(typeof valA==="string") valA=valA.toLowerCase();
             if(typeof valB==="string") valB=valB.toLowerCase();
-            if(valA < valB) return currentSort.asc?-1:1;
-            if(valA > valB) return currentSort.asc?1:-1;
-            return 0;
+            return valA<valB? (currentSort.asc?-1:1) : valA>valB? (currentSort.asc?1:-1):0;
         });
     }
 
     tenants.forEach((t,i)=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input class="form-control form-control-sm" value="${t.name}"></td>
-            <td><input class="form-control form-control-sm" value="${t.rent}"></td>
-            <td>
-                <select class="form-select form-select-sm">
-                    <option value="2025-10-01" ${t.date==="2025-10-01"?'selected':''}>2025-10-01</option>
-                    <option value="2025-10-05" ${t.date==="2025-10-05"?'selected':''}>2025-10-05</option>
-                    <option value="2025-10-10" ${t.date==="2025-10-10"?'selected':''}>2025-10-10</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select form-select-sm">
-                    <option value="Payé" ${t.status==="Payé"?'selected':''}>Payé</option>
-                    <option value="En retard" ${t.status==="En retard"?'selected':''}>En retard</option>
-                </select>
-            </td>
-            <td>
-                <button class="btn btn-sm btn-success">✔</button>
-                <button class="btn btn-sm btn-danger">✖</button>
-            </td>`;
-        tr.querySelector('button.btn-success').onclick = ()=>{
-            t.name = tr.children[0].firstChild.value;
-            t.rent = tr.children[1].firstChild.value;
-            t.date = tr.children[2].firstChild.value;
-            t.status = tr.children[3].firstChild.value;
-            saveData(data);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+        <td><input class="form-control form-control-sm" value="${t.name}"></td>
+        <td><input class="form-control form-control-sm" value="${t.rent}"></td>
+        <td><input type="date" class="form-control form-control-sm" value="${t.date}"></td>
+        <td>
+            <select class="form-select form-select-sm">
+                <option ${t.paymentMode==="Espèces"?'selected':''}>Espèces</option>
+                <option ${t.paymentMode==="Wave"?'selected':''}>Wave</option>
+                <option ${t.paymentMode==="Orange Money"?'selected':''}>Orange Money</option>
+            </select>
+        </td>
+        <td>
+            <select class="form-select form-select-sm">
+                <option ${t.status==="Payé"?'selected':''}>Payé</option>
+                <option ${t.status==="En retard"?'selected':''}>En retard</option>
+                <option ${t.status==="Non payé"?'selected':''}>Non payé</option>
+            </select>
+        </td>
+        <td>
+            <button class="btn btn-sm btn-success">✔</button>
+            <button class="btn btn-sm btn-danger">✖</button>
+        </td>`;
+        tr.querySelector('button.btn-success').onclick=()=>{
+            t.name=tr.children[0].firstChild.value;
+            t.rent=tr.children[1].firstChild.value;
+            t.date=tr.children[2].firstChild.value;
+            t.paymentMode=tr.children[3].firstChild.value;
+            t.status=tr.children[4].firstChild.value;
+            saveData();
             renderAll(filter);
         };
-        tr.querySelector('button.btn-danger').onclick = ()=>{
-            if(confirm("Supprimer ce locataire ?")){
-                apartment.tenants.splice(i,1);
-                saveData(data);
-                renderAll(filter);
-            }
+        tr.querySelector('button.btn-danger').onclick=()=>{
+            if(confirm("Supprimer ce locataire ?")){ unit.tenants.splice(i,1); saveData(); renderAll(filter); }
         };
         tbody.appendChild(tr);
     });
@@ -206,91 +255,119 @@ function renderTenantsTable(filter=""){
 
 function renderAll(filter=""){ renderSelects(); renderTenantsTable(filter); }
 
-// Selects change
+// Sélections
 document.getElementById('selectBuilding').onchange = e=>{
-    selectedBuildingId = parseInt(e.target.value);
-    selectedApartmentId = findBuilding(selectedBuildingId).appartements[0]?.id || null;
+    selectedBuildingId=parseInt(e.target.value);
+    const building=findBuilding(selectedBuildingId);
+    selectedUnitId=building.unites[0]?.id||null;
     renderAll(document.getElementById('searchInput').value);
 };
-document.getElementById('selectApartment').onchange = e=>{
-    selectedApartmentId = parseInt(e.target.value);
+document.getElementById('selectUnit').onchange = e=>{
+    selectedUnitId=parseInt(e.target.value);
     renderAll(document.getElementById('searchInput').value);
 };
 
-// Add building/apartment/tenant
-document.getElementById('btnAddBuilding').onclick = ()=>{
-    const name = prompt("Nom de l'immeuble :"); if(!name) return;
-    const id = Date.now();
-    data.push({ id, nom: name, appartements: [] }); saveData(data); selectedBuildingId=id;
-    renderAll();
-};
-document.getElementById('btnAddApartment').onclick = ()=>{
-    const name = prompt("Nom de l'appartement :"); if(!name) return;
-    const building = findBuilding(selectedBuildingId); const id = Date.now();
-    building.appartements.push({ id, name, tenants: [] }); saveData(data); selectedApartmentId=id;
-    renderAll();
-};
-document.getElementById('btnAddTenant').onclick = ()=>{
-    if(!selectedBuildingId || !selectedApartmentId) return alert("Sélectionnez immeuble et appartement");
-    const name = prompt("Nom du locataire :"); if(!name) return;
-    const rent = prompt("Montant du loyer :");
-    const date = prompt("Date de paiement :");
-    const status = prompt("Statut :");
-    const building = findBuilding(selectedBuildingId);
-    const apartment = findApartment(building, selectedApartmentId);
-    apartment.tenants.push({ name,rent,date,status }); saveData(data); renderAll(document.getElementById('searchInput').value);
+// Bouton Enregistrer Immeuble
+document.getElementById('saveBuilding').onclick = ()=>{
+    const name=document.getElementById('inputBuildingName').value.trim();
+    if(!name) return alert("Nom requis");
+    const id=Date.now();
+    data.push({id,nom:name,unites:[]});
+    saveData(); selectedBuildingId=id;
+    renderAll(); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalBuilding')).hide();
+    document.getElementById('inputBuildingName').value='';
 };
 
-// Search filter instantané
-document.getElementById('searchInput').oninput = e=> renderAll(e.target.value);
+// Bouton Enregistrer Unité
+document.getElementById('saveUnit').onclick = ()=>{
+    if(!selectedBuildingId) return alert("Sélectionnez un immeuble d'abord");
+    const name=document.getElementById('inputUnitName').value.trim();
+    if(!name) return alert("Nom requis");
+    const type=document.getElementById('inputUnitType').value;
+    const building=findBuilding(selectedBuildingId);
+    if(!building.unites) building.unites=[];
+    const id=Date.now();
+    building.unites.push({id,nom:name,type,tenants:[]});
+    saveData(); selectedUnitId=id; renderAll(); 
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalUnit')).hide();
+    document.getElementById('inputUnitName').value='';
+};
 
-// Column sort
+// Bouton Enregistrer Locataire
+document.getElementById('saveTenant').onclick = ()=>{
+    if(!selectedBuildingId||!selectedUnitId) return alert("Sélectionnez immeuble et unité");
+    const name=document.getElementById('inputTenantName').value.trim();
+    const rent=document.getElementById('inputTenantRent').value;
+    const date=document.getElementById('inputTenantDate').value;
+    const paymentMode=document.getElementById('inputTenantPaymentMode').value;
+    const status=document.getElementById('inputTenantStatus').value;
+    if(!name||!rent||!date) return alert("Remplir tous les champs");
+    const unit=findUnit(selectedBuildingId, selectedUnitId);
+    unit.tenants.push({name,rent,date,paymentMode,status});
+    saveData(); renderAll(); 
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTenant')).hide();
+    document.getElementById('inputTenantName').value='';
+    document.getElementById('inputTenantRent').value='';
+    document.getElementById('inputTenantDate').value='';
+};
+
+// Recherche instantanée
+document.getElementById('searchInput').oninput=e=>renderAll(e.target.value);
+
+// Tri colonnes
 document.querySelectorAll('#tenantsTable th[data-col]').forEach(th=>{
-    th.onclick = ()=>{
-        const col = th.getAttribute('data-col');
-        if(currentSort.col===col) currentSort.asc = !currentSort.asc;
-        else { currentSort.col = col; currentSort.asc = true; }
+    th.onclick=()=>{
+        const col=th.getAttribute('data-col');
+        if(currentSort.col===col) currentSort.asc=!currentSort.asc;
+        else { currentSort.col=col; currentSort.asc=true; }
         document.querySelectorAll('#tenantsTable th').forEach(h=>h.classList.remove('sorted-asc','sorted-desc'));
         th.classList.add(currentSort.asc?'sorted-asc':'sorted-desc');
         renderTenantsTable(document.getElementById('searchInput').value);
     };
 });
 
-// Print
-document.getElementById('btnPrint').onclick = ()=> window.print();
+// Imprimer
+document.getElementById('btnPrint').onclick=()=> window.print();
 
-// Export PDF
-document.getElementById('btnExportPDF').onclick = ()=>{
+// Export PDF corrigé
+document.getElementById('btnExportPDF').onclick = () => {
+    if(!selectedBuildingId||!selectedUnitId) return alert("Sélectionnez immeuble et unité");
     const doc = new jsPDF({unit:'pt', format:'a4'});
     const filter = document.getElementById('searchInput').value.toLowerCase();
-    if(!selectedBuildingId || !selectedApartmentId) return alert("Sélectionnez un immeuble et un appartement");
     const building = findBuilding(selectedBuildingId);
-    const apartment = findApartment(building, selectedApartmentId);
+    const unit = findUnit(selectedBuildingId, selectedUnitId);
+    const tenants = unit.tenants.filter(t => `${t.name} ${t.status} ${unit.nom}`.toLowerCase().includes(filter));
+    const colWidths = [150, 60, 80, 100, 80];
+    let y = 40;
 
-    let tenants = apartment.tenants.filter(t=>`${t.name} ${t.status} ${apartment.name}`.toLowerCase().includes(filter));
+    const img = new Image();
+    img.src = 'https://via.placeholder.com/200x60?text=Logo+Gestion+Immeubles+Pro';
+    img.onload = () => {
+        doc.addImage(img,'PNG',40,10,120,35);
+        y+=50;
 
-    const colWidths = [150, 80, 100, 80]; let y=40;
+        doc.setFontSize(16); doc.setFont('helvetica','bold');
+        doc.text(`Locataires - ${unit.nom} (${building.nom})`,40,y); y+=30;
 
-    doc.setFontSize(16); doc.setFont('helvetica','bold');
-    doc.text(`Locataires - ${apartment.name} (${building.nom})`,40,y); y+=30;
+        doc.setFontSize(12); doc.setFont('helvetica','bold');
+        const headers=["Locataire","Loyer","Date","Mode Paiement","Statut"];
+        let x=40; doc.setFillColor(52,58,64); doc.rect(x-5, y-12, colWidths.reduce((a,b)=>a+b,0)+20, 20,'F');
+        headers.forEach((h,i)=>{ doc.setTextColor(255,255,255); doc.text(h,x,y); x+=colWidths[i]; });
+        y+=20; doc.setLineWidth(0.5); doc.line(40,y-5,40+colWidths.reduce((a,b)=>a+b,0),y-5);
+        doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
 
-    doc.setFontSize(12); doc.setFont('helvetica','bold');
-    const headers=["Locataire","Loyer","Date","Statut"]; let x=40;
-    doc.setFillColor(52,58,64); doc.rect(x-5, y-12, colWidths.reduce((a,b)=>a+b,0)+20, 20,'F');
-    headers.forEach((h,i)=>{ doc.setTextColor(255,255,255); doc.text(h,x,y); x+=colWidths[i]; });
-    y+=20; doc.setLineWidth(0.5); doc.line(40, y-5, 40+colWidths.reduce((a,b)=>a+b,0), y-5);
+        tenants.forEach((t,i)=>{
+            let x=40; if(i%2) doc.setFillColor(248,249,250); else doc.setFillColor(255,255,255);
+            doc.rect(x-5,y-12,colWidths.reduce((a,b)=>a+b,0)+20,18,'F');
+            [t.name,t.rent,t.date,t.paymentMode,t.status].forEach((v,idx)=>{ doc.text(String(v),x,y); x+=colWidths[idx]; });
+            y+=20;
+            if(y>750){ doc.addPage(); y=40; }
+        });
 
-    doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
-    tenants.forEach((t,i)=>{
-        let x=40; if(i%2) doc.setFillColor(248,249,250); else doc.setFillColor(255,255,255);
-        doc.rect(x-5, y-12, colWidths.reduce((a,b)=>a+b,0)+20, 18,'F');
-        [t.name,t.rent,t.date,t.status].forEach((v,idx)=>{ doc.text(String(v),x,y); x+=colWidths[idx]; });
-        y+=20; if(y>750){ doc.addPage(); y=40; }
-    });
-    doc.save(`locataires_${apartment.name}.pdf`);
+        doc.save(`locataires_${unit.nom}.pdf`);
+    };
 };
 
-// Initial render
 renderAll();
 </script>
 </body>
