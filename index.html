@@ -34,7 +34,7 @@ select, input { min-width: 120px; }
 
 <div class="container">
     <div class="text-center mb-3">
-        <h2 class="mb-3">Gestion Immeubles et Locataires Pro</h2>
+        <h2 class="mb-3">🏢   Gestion Immeubles et Locataires Pro chez Afia KBC</h2>
     </div>
 
     <!-- Dashboard -->
@@ -64,7 +64,7 @@ select, input { min-width: 120px; }
             </div>
         </div>
     </div>
-
+     <marquee behavior="" direction="" style="color: rgb(20, 177, 2);">Bienvenue Chez Afia Kenery business Center : Telephones : 77 676 66 00 / 77 152 95 69</marquee>
     <!-- Gestion immeubles et unités -->
     <div class="mb-3">
         <label for="selectBuilding" class="form-label">Immeuble :</label>
@@ -202,10 +202,7 @@ function renderSelects(){
     }
 }
 
-function renderDashboard(){
-    if(!selectedBuildingId||!selectedUnitId) return;
-    const unit=findUnit(selectedBuildingId, selectedUnitId);
-    const tenants = unit.tenants;
+function renderDashboard(tenants){
     document.getElementById('totalTenants').textContent = tenants.length;
     document.getElementById('totalPaid').textContent = tenants.filter(t=>t.status==="Payé").reduce((s,t)=>s+Number(t.rent),0);
     document.getElementById('totalLate').textContent = tenants.filter(t=>t.status==="En retard").reduce((s,t)=>s+Number(t.rent),0);
@@ -213,12 +210,21 @@ function renderDashboard(){
 
 function renderTenantsTable(filter=""){
     const tbody=document.querySelector('#tenantsTable tbody'); tbody.innerHTML='';
-    if(!selectedBuildingId||!selectedUnitId) return;
-    const unit=findUnit(selectedBuildingId, selectedUnitId);
-    let tenants = unit.tenants.filter(t=>`${t.name} ${t.status} ${unit.nom}`.toLowerCase().includes(filter.toLowerCase()));
-
+    if(!selectedBuildingId) return;
+    const building=findBuilding(selectedBuildingId);
     const unitFilter=document.getElementById('unitTypeFilter').value;
-    if(unitFilter) tenants = tenants.filter(t=>unit.type===unitFilter);
+
+    // Rassembler tous les locataires de l’immeuble ou filtrer par type
+    let allTenants = [];
+    building.unites.forEach(u=>{
+        if(!unitFilter || unitFilter === u.type){
+            u.tenants.forEach(t=>{
+                allTenants.push({...t, unitId:u.id, unitName:u.nom, unitType:u.type});
+            });
+        }
+    });
+
+    let tenants = allTenants.filter(t=>`${t.name} ${t.status} ${t.unitName}`.toLowerCase().includes(filter.toLowerCase()));
 
     if(currentSort.col){
         tenants.sort((a,b)=>{
@@ -231,52 +237,48 @@ function renderTenantsTable(filter=""){
 
     tenants.forEach((t,i)=>{
         const tr=document.createElement('tr');
-        tr.innerHTML=`<td><input class="form-control form-control-sm" value="${t.name}"></td>
-        <td><input class="form-control form-control-sm" value="${t.rent}"></td>
-        <td><input type="date" class="form-control form-control-sm" value="${t.date}"></td>
-        <td><select class="form-select form-select-sm">
-                <option ${t.paymentMode==="Espèces"?'selected':''}>Espèces</option>
-                <option ${t.paymentMode==="Wave"?'selected':''}>Wave</option>
-                <option ${t.paymentMode==="Orange Money"?'selected':''}>Orange Money</option>
-        </select></td>
-        <td><select class="form-select form-select-sm">
-                <option ${t.status==="Payé"?'selected':''}>Payé</option>
-                <option ${t.status==="En retard"?'selected':''}>En retard</option>
-                <option ${t.status==="Non payé"?'selected':''}>Non payé</option>
-        </select></td>
-        <td>${unit.nom}</td><td>${unit.type}</td>
-        <td><button class="btn btn-sm btn-success">✔</button>
-            <button class="btn btn-sm btn-danger">✖</button></td>`;
-        tr.querySelector('button.btn-success').onclick=()=>{ 
-            t.name=tr.children[0].firstChild.value;
-            t.rent=tr.children[1].firstChild.value;
-            t.date=tr.children[2].firstChild.value;
-            t.paymentMode=tr.children[3].firstChild.value;
-            t.status=tr.children[4].firstChild.value;
-            saveData(); renderAll(filter); 
-        };
-        tr.querySelector('button.btn-danger').onclick=()=>{ 
-            if(confirm("Supprimer ce locataire ?")){ unit.tenants.splice(i,1); saveData(); renderAll(filter); } 
+        tr.innerHTML=`<td>${t.name}</td>
+        <td>${t.rent}</td>
+        <td>${t.date}</td>
+        <td>${t.paymentMode}</td>
+        <td>${t.status}</td>
+        <td>${t.unitName}</td>
+        <td>${t.unitType}</td>
+        <td><button class="btn btn-sm btn-danger">✖</button></td>`;
+        tr.querySelector('button').onclick=()=>{ 
+            if(confirm("Supprimer ce locataire ?")){ 
+                // trouver l'unité par id et supprimer le locataire (on compare nom+date pour être plus sûr)
+                const unit = building.unites.find(u=>u.id===t.unitId);
+                if(unit){
+                    unit.tenants = unit.tenants.filter(tt=>!(tt.name===t.name && tt.date===t.date && String(tt.rent)===String(t.rent)));
+                    saveData(); renderAll(filter);
+                }
+            } 
         };
         tbody.appendChild(tr);
     });
-    renderDashboard();
+    renderDashboard(tenants);
 }
 
 function renderAll(filter=""){ renderSelects(); renderTenantsTable(filter); }
 
+// ===== gestion des selects =====
 document.getElementById('selectBuilding').onchange = e=>{
     selectedBuildingId=parseInt(e.target.value);
     const building=findBuilding(selectedBuildingId);
-    selectedUnitId=building.unites[0]?.id||null;
+    selectedUnitId=building?.unites?.[0]?.id||null;
     renderAll(document.getElementById('searchInput').value);
 };
+
 document.getElementById('selectUnit').onchange = e=>{
     selectedUnitId=parseInt(e.target.value);
     renderAll(document.getElementById('searchInput').value);
 };
-document.getElementById('unitTypeFilter').onchange = e=>renderTenantsTable(document.getElementById('searchInput').value);
 
+document.getElementById('unitTypeFilter').onchange = e=>renderTenantsTable(document.getElementById('searchInput').value);
+document.getElementById('searchInput').oninput = e=>renderTenantsTable(e.target.value);
+
+// ===== handlers manquants restaurés =====
 document.getElementById('saveBuilding').onclick = ()=>{
     const name=document.getElementById('inputBuildingName').value.trim();
     if(!name) return alert("Nom requis");
@@ -284,7 +286,7 @@ document.getElementById('saveBuilding').onclick = ()=>{
     data.push({id,nom:name,unites:[]});
     saveData(); selectedBuildingId=id;
     renderAll(); 
-    bootstrap.Modal.getInstance(document.getElementById('modalBuilding')).hide();
+    try{ bootstrap.Modal.getInstance(document.getElementById('modalBuilding')).hide(); }catch(e){}
     document.getElementById('inputBuildingName').value='';
 };
 
@@ -297,12 +299,15 @@ document.getElementById('saveUnit').onclick = ()=>{
     const id=Date.now();
     building.unites.push({id,nom:name,type,tenants:[]});
     saveData(); selectedUnitId=id; renderAll(); 
-    bootstrap.Modal.getInstance(document.getElementById('modalUnit')).hide();
+    try{ bootstrap.Modal.getInstance(document.getElementById('modalUnit')).hide(); }catch(e){}
     document.getElementById('inputUnitName').value='';
+    document.getElementById('inputUnitType').selectedIndex=0;
 };
 
 document.getElementById('saveTenant').onclick = ()=>{
-    if(!selectedBuildingId||!selectedUnitId) return alert("Sélectionnez immeuble et unité");
+    if(!selectedBuildingId) return alert("Sélectionnez immeuble et unité");
+    // Si unité sélectionnée null mais immeuble choisi, on ajoute à l'unité sélectionnée (si exists)
+    if(!selectedUnitId) return alert("Sélectionnez une unité");
     const name=document.getElementById('tenantName').value.trim();
     const rent=document.getElementById('tenantRent').value;
     const date=document.getElementById('tenantDate').value;
@@ -312,6 +317,7 @@ document.getElementById('saveTenant').onclick = ()=>{
     const unit=findUnit(selectedBuildingId, selectedUnitId);
     unit.tenants.push({name,rent,date,paymentMode,status});
     saveData(); renderAll(document.getElementById('searchInput').value);
+    try{ bootstrap.Modal.getInstance(document.getElementById('modalTenant')).hide(); }catch(e){}
     document.getElementById('tenantName').value='';
     document.getElementById('tenantRent').value='';
     document.getElementById('tenantDate').value='';
@@ -332,6 +338,7 @@ document.getElementById('deleteBuilding').onclick = ()=>{
 document.getElementById('deleteUnit').onclick = ()=>{
     if(!selectedUnitId) return alert("Aucune unité sélectionnée");
     const building=findBuilding(selectedBuildingId);
+    if(!building) return;
     if(confirm("Supprimer cette unité et tous ses locataires ?")){
         building.unites=building.unites.filter(u=>u.id!==selectedUnitId);
         selectedUnitId=building.unites[0]?.id||null;
@@ -339,30 +346,29 @@ document.getElementById('deleteUnit').onclick = ()=>{
     }
 };
 
-document.getElementById('searchInput').oninput = e=>renderTenantsTable(e.target.value);
-
 // ======================
 // Impression et PDF améliorés
 // ======================
 function generatePdfOrPrint(printOnly=false){
-    const unit = findUnit(selectedBuildingId, selectedUnitId);
-    if(!unit) return alert("Sélectionnez une unité avec locataires");
-    const tenants = unit.tenants;
+    const building=findBuilding(selectedBuildingId);
+    if(!building) return alert("Sélectionnez un immeuble");
+    const unitFilter=document.getElementById('unitTypeFilter').value;
+    let allTenants=[];
+    building.unites.forEach(u=>{
+        if(!unitFilter || unitFilter===u.type){
+            u.tenants.forEach(t=>allTenants.push({...t, unitName:u.nom, unitType:u.type}));
+        }
+    });
 
     if(printOnly){
         const printWindow = window.open('', '', 'height=800,width=1200');
-        let html = `<h2 style="text-align:center;">Liste des locataires - ${unit.nom} (${unit.type})</h2>`;
+        let html = `<h2 style="text-align:center;">Liste des locataires - ${building.nom}</h2>`;
         html += `<table border="1" cellspacing="0" cellpadding="5" style="width:100%;border-collapse:collapse;">
             <thead style="background-color:#0d6efd;color:white;">
-            <tr>
-                <th>Nom</th><th>Loyer</th><th>Date Paiement</th><th>Mode Paiement</th><th>Statut</th><th>Unité</th><th>Type</th>
-            </tr></thead><tbody>`;
-        tenants.forEach(t=>{
+            <tr><th>Nom</th><th>Loyer</th><th>Date Paiement</th><th>Mode Paiement</th><th>Statut</th><th>Unité</th><th>Type</th></tr></thead><tbody>`;
+        allTenants.forEach(t=>{
             let bgColor=t.status==="Payé"?"#d4edda": t.status==="En retard"?"#f8d7da":"#fff3cd";
-            html += `<tr style="background-color:${bgColor};">
-                <td>${t.name}</td><td>${t.rent}</td><td>${t.date}</td><td>${t.paymentMode}</td>
-                <td>${t.status}</td><td>${unit.nom}</td><td>${unit.type}</td>
-            </tr>`;
+            html += `<tr style="background-color:${bgColor};"><td>${t.name}</td><td>${t.rent}</td><td>${t.date}</td><td>${t.paymentMode}</td><td>${t.status}</td><td>${t.unitName}</td><td>${t.unitType}</td></tr>`;
         });
         html += `</tbody></table>`;
         printWindow.document.write(html);
@@ -371,18 +377,17 @@ function generatePdfOrPrint(printOnly=false){
     } else {
         const doc = new jsPDF();
         doc.setFontSize(14);
-        doc.text(`Liste des locataires - ${unit.nom} (${unit.type})`, 14, 15);
-        const rows = tenants.map(t=>[
-            t.name, t.rent, t.date, t.paymentMode, t.status, unit.nom, unit.type
-        ]);
-        const styles = { headStyles:{ fillColor:[13,110,253], textColor:255 }, bodyStyles:{ fontSize:10 }, startY:25 };
+        doc.text(`Liste des locataires - ${building.nom}`, 14, 15);
+        const rows = allTenants.map(t=>[t.name, t.rent, t.date, t.paymentMode, t.status, t.unitName, t.unitType]);
         doc.autoTable({
             head:[["Nom","Loyer","Date Paiement","Mode Paiement","Statut","Unité","Type"]],
             body:rows,
-            ...styles,
-            didParseCell: function(data){
+            headStyles:{ fillColor:[13,110,253], textColor:255 },
+            bodyStyles:{ fontSize:10 },
+            startY:25,
+            didParseCell:function(data){
                 if(data.section==="body" && data.column.index===4){
-                    const val = data.cell.raw;
+                    const val=data.cell.raw;
                     if(val==="Payé") data.cell.styles.fillColor=[212,237,218];
                     else if(val==="En retard") data.cell.styles.fillColor=[248,215,218];
                     else if(val==="Non payé") data.cell.styles.fillColor=[255,243,205];
