@@ -34,12 +34,12 @@ select, input { min-width: 120px; }
 
 <div class="container">
     <div class="text-center mb-3">
-        <h2 class="mb-3">🏢   Gestion Immeubles et Locataires Pro chez Afia KBC</h2>
+        <h2 class="mb-3">🏢 Gestion Immeubles et Locataires Pro</h2>
     </div>
 
     <!-- Dashboard -->
     <div class="row mb-3" id="dashboard">
-        <div class="col-md-4 mb-2">
+        <div class="col-md-3 mb-2">
             <div class="card text-bg-primary text-center">
                 <div class="card-body">
                     <h5 class="card-title">Total Locataires</h5>
@@ -47,7 +47,7 @@ select, input { min-width: 120px; }
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-2">
+        <div class="col-md-3 mb-2">
             <div class="card text-bg-success text-center">
                 <div class="card-body">
                     <h5 class="card-title">Loyers Payés</h5>
@@ -55,7 +55,7 @@ select, input { min-width: 120px; }
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-2">
+        <div class="col-md-3 mb-2">
             <div class="card text-bg-danger text-center">
                 <div class="card-body">
                     <h5 class="card-title">Loyers En Retard</h5>
@@ -63,8 +63,16 @@ select, input { min-width: 120px; }
                 </div>
             </div>
         </div>
+        <div class="col-md-3 mb-2">
+            <div class="card text-bg-warning text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Dépenses</h5>
+                    <p class="card-text fs-4" id="totalExpenses">0</p>
+                </div>
+            </div>
+        </div>
     </div>
-     <marquee behavior="" direction="" style="color: rgb(20, 177, 2);">Bienvenue Chez Afia Kenery business Center : Telephones : 77 676 66 00 / 77 152 95 69</marquee>
+
     <!-- Gestion immeubles et unités -->
     <div class="mb-3">
         <label for="selectBuilding" class="form-label">Immeuble :</label>
@@ -91,7 +99,7 @@ select, input { min-width: 120px; }
         </select>
     </div>
 
-    <!-- Table locataires -->
+    <!-- Table locataires et dépenses -->
     <div class="table-container mb-3">
         <table class="table table-bordered table-striped" id="tenantsTable">
             <thead class="table-dark">
@@ -103,6 +111,7 @@ select, input { min-width: 120px; }
                     <th data-col="status">Statut</th>
                     <th>Unité</th>
                     <th>Type</th>
+                    <th data-col="expense">Dépense</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -111,11 +120,14 @@ select, input { min-width: 120px; }
     </div>
 
     <div class="mb-4">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTenant">Ajouter un locataire</button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTenant">Ajouter un locataire / dépense</button>
         <button id="btnPrint" class="btn btn-secondary">Imprimer</button>
         <button id="btnExportPDF" class="btn btn-danger">Exporter en PDF</button>
     </div>
 </div>
+
+<!-- Zone pour impression / PDF -->
+<div id="printArea" style="display:none;"></div>
 
 <!-- Modales -->
 <!-- Immeuble -->
@@ -148,25 +160,26 @@ select, input { min-width: 120px; }
   </div>
 </div>
 
-<!-- Locataire -->
+<!-- Locataire / Dépense -->
 <div class="modal fade" id="modalTenant" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title">Ajouter Locataire</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-header"><h5 class="modal-title">Ajouter / Modifier Locataire ou Dépense</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <div class="modal-body">
-        <input type="text" id="tenantName" class="form-control mb-2" placeholder="Nom">
-        <input type="number" id="tenantRent" class="form-control mb-2" placeholder="Loyer">
+        <input type="text" id="tenantName" class="form-control mb-2" placeholder="Nom locataire ou dépense">
+        <input type="number" id="tenantRent" class="form-control mb-2" placeholder="Loyer / Montant dépense">
         <input type="date" id="tenantDate" class="form-control mb-2">
         <select id="tenantPaymentMode" class="form-select mb-2">
             <option>Espèces</option>
             <option>Wave</option>
             <option>Orange Money</option>
         </select>
-        <select id="tenantStatus" class="form-select">
+        <select id="tenantStatus" class="form-select mb-2">
             <option>Payé</option>
             <option>En retard</option>
             <option>Non payé</option>
         </select>
+        <input type="number" id="tenantExpense" class="form-control" placeholder="Dépense (si applicable)">
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-primary" id="saveTenant">Enregistrer</button></div>
     </div>
@@ -180,6 +193,7 @@ let data = JSON.parse(localStorage.getItem('gestionData')) || [];
 let selectedBuildingId = data[0]?.id || null;
 let selectedUnitId = data[0]?.unites?.[0]?.id || null;
 let currentSort = { col:null, asc:true };
+let editingTenantId = null;
 
 function saveData(){ localStorage.setItem('gestionData', JSON.stringify(data)); }
 function findBuilding(id){ return data.find(b=>b.id===id); }
@@ -206,6 +220,7 @@ function renderDashboard(tenants){
     document.getElementById('totalTenants').textContent = tenants.length;
     document.getElementById('totalPaid').textContent = tenants.filter(t=>t.status==="Payé").reduce((s,t)=>s+Number(t.rent),0);
     document.getElementById('totalLate').textContent = tenants.filter(t=>t.status==="En retard").reduce((s,t)=>s+Number(t.rent),0);
+    document.getElementById('totalExpenses').textContent = tenants.reduce((s,t)=>s+Number(t.expense||0),0);
 }
 
 function renderTenantsTable(filter=""){
@@ -214,7 +229,6 @@ function renderTenantsTable(filter=""){
     const building=findBuilding(selectedBuildingId);
     const unitFilter=document.getElementById('unitTypeFilter').value;
 
-    // Rassembler tous les locataires de l’immeuble ou filtrer par type
     let allTenants = [];
     building.unites.forEach(u=>{
         if(!unitFilter || unitFilter === u.type){
@@ -235,7 +249,7 @@ function renderTenantsTable(filter=""){
         });
     }
 
-    tenants.forEach((t,i)=>{
+    tenants.forEach(t=>{
         const tr=document.createElement('tr');
         tr.innerHTML=`<td>${t.name}</td>
         <td>${t.rent}</td>
@@ -244,16 +258,29 @@ function renderTenantsTable(filter=""){
         <td>${t.status}</td>
         <td>${t.unitName}</td>
         <td>${t.unitType}</td>
-        <td><button class="btn btn-sm btn-danger">✖</button></td>`;
-        tr.querySelector('button').onclick=()=>{ 
-            if(confirm("Supprimer ce locataire ?")){ 
-                // trouver l'unité par id et supprimer le locataire (on compare nom+date pour être plus sûr)
+        <td>${t.expense || 0}</td>
+        <td>
+            <button class="btn btn-sm btn-warning me-1">✎</button>
+            <button class="btn btn-sm btn-danger">✖</button>
+        </td>`;
+        tr.querySelector('button.btn-warning').onclick=()=>{
+            editingTenantId = t.id;
+            document.getElementById('tenantName').value = t.name;
+            document.getElementById('tenantRent').value = t.rent;
+            document.getElementById('tenantDate').value = t.date;
+            document.getElementById('tenantPaymentMode').value = t.paymentMode;
+            document.getElementById('tenantStatus').value = t.status;
+            document.getElementById('tenantExpense').value = t.expense || '';
+            new bootstrap.Modal(document.getElementById('modalTenant')).show();
+        };
+        tr.querySelector('button.btn-danger').onclick=()=>{
+            if(confirm("Supprimer ?")){
                 const unit = building.unites.find(u=>u.id===t.unitId);
                 if(unit){
-                    unit.tenants = unit.tenants.filter(tt=>!(tt.name===t.name && tt.date===t.date && String(tt.rent)===String(t.rent)));
+                    unit.tenants = unit.tenants.filter(tt=>tt.id!==t.id);
                     saveData(); renderAll(filter);
                 }
-            } 
+            }
         };
         tbody.appendChild(tr);
     });
@@ -262,146 +289,128 @@ function renderTenantsTable(filter=""){
 
 function renderAll(filter=""){ renderSelects(); renderTenantsTable(filter); }
 
-// ===== gestion des selects =====
+// Sélections
 document.getElementById('selectBuilding').onchange = e=>{
     selectedBuildingId=parseInt(e.target.value);
     const building=findBuilding(selectedBuildingId);
     selectedUnitId=building?.unites?.[0]?.id||null;
     renderAll(document.getElementById('searchInput').value);
 };
-
 document.getElementById('selectUnit').onchange = e=>{
     selectedUnitId=parseInt(e.target.value);
     renderAll(document.getElementById('searchInput').value);
 };
-
 document.getElementById('unitTypeFilter').onchange = e=>renderTenantsTable(document.getElementById('searchInput').value);
 document.getElementById('searchInput').oninput = e=>renderTenantsTable(e.target.value);
 
-// ===== handlers manquants restaurés =====
+// Ajouter / Modifier Immeuble / Unité / Locataire
 document.getElementById('saveBuilding').onclick = ()=>{
-    const name=document.getElementById('inputBuildingName').value.trim();
+    const name = document.getElementById('inputBuildingName').value.trim();
     if(!name) return alert("Nom requis");
-    const id=Date.now();
-    data.push({id,nom:name,unites:[]});
-    saveData(); selectedBuildingId=id;
-    renderAll(); 
-    try{ bootstrap.Modal.getInstance(document.getElementById('modalBuilding')).hide(); }catch(e){}
+    const id = Date.now(); data.push({id, nom:name, unites:[]});
+    selectedBuildingId = id; saveData(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('modalBuilding')).hide();
     document.getElementById('inputBuildingName').value='';
 };
-
 document.getElementById('saveUnit').onclick = ()=>{
-    if(!selectedBuildingId) return alert("Sélectionnez un immeuble d'abord");
     const name=document.getElementById('inputUnitName').value.trim();
-    if(!name) return alert("Nom requis");
     const type=document.getElementById('inputUnitType').value;
-    const building=findBuilding(selectedBuildingId);
-    const id=Date.now();
-    building.unites.push({id,nom:name,type,tenants:[]});
-    saveData(); selectedUnitId=id; renderAll(); 
-    try{ bootstrap.Modal.getInstance(document.getElementById('modalUnit')).hide(); }catch(e){}
-    document.getElementById('inputUnitName').value='';
-    document.getElementById('inputUnitType').selectedIndex=0;
+    if(!name) return alert("Nom requis"); if(!selectedBuildingId) return alert("Sélectionnez un immeuble");
+    const building = findBuilding(selectedBuildingId);
+    const id = Date.now(); building.unites.push({id, nom:name, type, tenants:[]});
+    selectedUnitId=id; saveData(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('modalUnit')).hide();
+    document.getElementById('inputUnitName').value=''; document.getElementById('inputUnitType').selectedIndex=0;
 };
-
 document.getElementById('saveTenant').onclick = ()=>{
-    if(!selectedBuildingId) return alert("Sélectionnez immeuble et unité");
-    // Si unité sélectionnée null mais immeuble choisi, on ajoute à l'unité sélectionnée (si exists)
-    if(!selectedUnitId) return alert("Sélectionnez une unité");
+    if(!selectedBuildingId || !selectedUnitId) return alert("Sélectionnez immeuble et unité");
     const name=document.getElementById('tenantName').value.trim();
     const rent=document.getElementById('tenantRent').value;
     const date=document.getElementById('tenantDate').value;
     const paymentMode=document.getElementById('tenantPaymentMode').value;
     const status=document.getElementById('tenantStatus').value;
-    if(!name||!rent||!date) return alert("Tous les champs sont requis");
-    const unit=findUnit(selectedBuildingId, selectedUnitId);
-    unit.tenants.push({name,rent,date,paymentMode,status});
+    const expense=document.getElementById('tenantExpense').value || 0;
+    if(!name || !rent || !date) return alert("Champs obligatoires");
+    const unit = findUnit(selectedBuildingId, selectedUnitId);
+    if(editingTenantId){
+        const t = unit.tenants.find(t=>t.id===editingTenantId);
+        Object.assign(t,{name,rent,date,paymentMode,status,expense:Number(expense)});
+        editingTenantId=null;
+    }else{
+        unit.tenants.push({id:Date.now(),name,rent,date,paymentMode,status,expense:Number(expense)});
+    }
     saveData(); renderAll(document.getElementById('searchInput').value);
-    try{ bootstrap.Modal.getInstance(document.getElementById('modalTenant')).hide(); }catch(e){}
-    document.getElementById('tenantName').value='';
-    document.getElementById('tenantRent').value='';
-    document.getElementById('tenantDate').value='';
-    document.getElementById('tenantPaymentMode').selectedIndex=0;
-    document.getElementById('tenantStatus').selectedIndex=0;
+    bootstrap.Modal.getInstance(document.getElementById('modalTenant')).hide();
+    document.getElementById('tenantName').value=''; document.getElementById('tenantRent').value='';
+    document.getElementById('tenantDate').value=''; document.getElementById('tenantPaymentMode').selectedIndex=0;
+    document.getElementById('tenantStatus').selectedIndex=0; document.getElementById('tenantExpense').value='';
 };
 
-document.getElementById('deleteBuilding').onclick = ()=>{
-    if(!selectedBuildingId) return alert("Aucun immeuble sélectionné");
-    if(confirm("Supprimer cet immeuble et toutes ses unités et locataires ?")){
-        data=data.filter(b=>b.id!==selectedBuildingId);
-        selectedBuildingId=data[0]?.id||null;
-        selectedUnitId=data[0]?.unites?.[0]?.id||null;
-        saveData(); renderAll();
+// Supprimer immeuble / unité
+document.getElementById('deleteBuilding').onclick=()=>{
+    if(!selectedBuildingId) return; if(confirm("Supprimer immeuble ?")){
+        data = data.filter(b=>b.id!==selectedBuildingId);
+        selectedBuildingId = data[0]?.id||null; selectedUnitId = data[0]?.unites?.[0]?.id||null;
+        saveData(); renderAll(document.getElementById('searchInput').value);
     }
 };
-
-document.getElementById('deleteUnit').onclick = ()=>{
-    if(!selectedUnitId) return alert("Aucune unité sélectionnée");
-    const building=findBuilding(selectedBuildingId);
-    if(!building) return;
-    if(confirm("Supprimer cette unité et tous ses locataires ?")){
+document.getElementById('deleteUnit').onclick=()=>{
+    if(!selectedBuildingId || !selectedUnitId) return; if(confirm("Supprimer unité ?")){
+        const building=findBuilding(selectedBuildingId);
         building.unites=building.unites.filter(u=>u.id!==selectedUnitId);
-        selectedUnitId=building.unites[0]?.id||null;
-        saveData(); renderAll();
+        selectedUnitId = building.unites[0]?.id||null;
+        saveData(); renderAll(document.getElementById('searchInput').value);
     }
 };
 
-// ======================
-// Impression et PDF améliorés
-// ======================
-function generatePdfOrPrint(printOnly=false){
-    const building=findBuilding(selectedBuildingId);
-    if(!building) return alert("Sélectionnez un immeuble");
-    const unitFilter=document.getElementById('unitTypeFilter').value;
-    let allTenants=[];
-    building.unites.forEach(u=>{
-        if(!unitFilter || unitFilter===u.type){
-            u.tenants.forEach(t=>allTenants.push({...t, unitName:u.nom, unitType:u.type}));
-        }
-    });
+// Tri colonnes
+document.querySelectorAll('#tenantsTable th[data-col]').forEach(th=>{
+    th.onclick = ()=>{
+        const col = th.dataset.col;
+        if(currentSort.col===col) currentSort.asc=!currentSort.asc;
+        else currentSort={col,asc:true};
+        document.querySelectorAll('#tenantsTable th').forEach(t=>t.classList.remove('sorted-asc','sorted-desc'));
+        th.classList.add(currentSort.asc?'sorted-asc':'sorted-desc');
+        renderTenantsTable(document.getElementById('searchInput').value);
+    };
+});
 
-    if(printOnly){
-        const printWindow = window.open('', '', 'height=800,width=1200');
-        let html = `<h2 style="text-align:center;">Liste des locataires - ${building.nom}</h2>`;
-        html += `<table border="1" cellspacing="0" cellpadding="5" style="width:100%;border-collapse:collapse;">
-            <thead style="background-color:#0d6efd;color:white;">
-            <tr><th>Nom</th><th>Loyer</th><th>Date Paiement</th><th>Mode Paiement</th><th>Statut</th><th>Unité</th><th>Type</th></tr></thead><tbody>`;
-        allTenants.forEach(t=>{
-            let bgColor=t.status==="Payé"?"#d4edda": t.status==="En retard"?"#f8d7da":"#fff3cd";
-            html += `<tr style="background-color:${bgColor};"><td>${t.name}</td><td>${t.rent}</td><td>${t.date}</td><td>${t.paymentMode}</td><td>${t.status}</td><td>${t.unitName}</td><td>${t.unitType}</td></tr>`;
-        });
-        html += `</tbody></table>`;
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.print();
-    } else {
-        const doc = new jsPDF();
-        doc.setFontSize(14);
-        doc.text(`Liste des locataires - ${building.nom}`, 14, 15);
-        const rows = allTenants.map(t=>[t.name, t.rent, t.date, t.paymentMode, t.status, t.unitName, t.unitType]);
-        doc.autoTable({
-            head:[["Nom","Loyer","Date Paiement","Mode Paiement","Statut","Unité","Type"]],
-            body:rows,
-            headStyles:{ fillColor:[13,110,253], textColor:255 },
-            bodyStyles:{ fontSize:10 },
-            startY:25,
-            didParseCell:function(data){
-                if(data.section==="body" && data.column.index===4){
-                    const val=data.cell.raw;
-                    if(val==="Payé") data.cell.styles.fillColor=[212,237,218];
-                    else if(val==="En retard") data.cell.styles.fillColor=[248,215,218];
-                    else if(val==="Non payé") data.cell.styles.fillColor=[255,243,205];
-                }
-            }
-        });
-        doc.save('locataires.pdf');
-    }
+// Impression / PDF
+function generatePrintContent(){
+    const building=findBuilding(selectedBuildingId); if(!building) return "<p>Aucun immeuble</p>";
+    const tenants = building.unites.flatMap(u=>u.tenants.map(t=>({...t, unitName:u.nom, unitType:u.type})));
+    let html = `<div style="text-align:center;margin-bottom:20px;">
+    <h2>🏢 ${building.nom}</h2>
+    <p>Total locataires: ${tenants.length} | Loyers payés: ${tenants.filter(t=>t.status==="Payé").reduce((s,t)=>s+Number(t.rent),0)} | 
+    Loyers en retard: ${tenants.filter(t=>t.status==="En retard").reduce((s,t)=>s+Number(t.rent),0)} | Dépenses: ${tenants.reduce((s,t)=>s+Number(t.expense||0),0)}</p>
+    </div><table border="1" cellspacing="0" cellpadding="5" style="width:100%; border-collapse: collapse;">
+    <thead style="background-color:#343a40; color:white;"><tr>
+    <th>Locataire / Dépense</th><th>Loyer / Montant</th><th>Date Paiement</th><th>Mode Paiement</th>
+    <th>Statut</th><th>Unité</th><th>Type</th><th>Dépense</th></tr></thead><tbody>`;
+    building.unites.forEach(u=>{ u.tenants.forEach((t,i)=>{
+        const bg=i%2===0?"#f8f9fa":"#ffffff";
+        const statusColor=t.status==="Payé"?"#28a745":t.status==="En retard"?"#dc3545":"#ffc107";
+        html+=`<tr style="background-color:${bg};">
+        <td>${t.name}</td><td>${t.rent}</td><td>${t.date}</td><td>${t.paymentMode}</td>
+        <td style="color:white;background-color:${statusColor};text-align:center;">${t.status}</td>
+        <td>${u.nom}</td><td>${u.type}</td><td>${t.expense||0}</td></tr>`;
+    });});
+    html+="</tbody></table><div style='text-align:center;margin-top:20px;font-size:12px;'>Imprimé le "+new Date().toLocaleDateString()+"</div>";
+    return html;
 }
+document.getElementById('btnPrint').onclick = ()=>{
+    const printArea=document.getElementById('printArea'); printArea.innerHTML=generatePrintContent();
+    printArea.style.display='block'; window.print(); printArea.style.display='none';
+};
+document.getElementById('btnExportPDF').onclick = ()=>{
+    const doc=new jsPDF('p','pt','a4'); const building=findBuilding(selectedBuildingId); if(!building) return alert("Aucun immeuble sélectionné");
+    const tenants = building.unites.flatMap(u=>u.tenants.map(t=>({...t, unitName:u.nom, unitType:u.type})));
+    doc.setFontSize(16); doc.text(`Gestion Immeubles - ${building.nom}`,40,40);
+    doc.setFontSize(12); doc.text(`Total locataires: ${tenants.length} | Loyers payés: ${tenants.filter(t=>t.status==="Payé").reduce((s,t)=>s+Number(t.rent),0)} | Loyers en retard: ${tenants.filter(t=>t.status==="En retard").reduce((s,t)=>s+Number(t.rent),0)} | Dépenses: ${tenants.reduce((s,t)=>s+Number(t.expense||0),0)}`,40,60);
+    const columns=["Locataire","Loyer","Date","Mode","Statut","Unité","Type","Dépense"];
+    const rows=tenants.map(t=>[t.name,t.rent,t.date,t.paymentMode,t.status,t.unitName,t.unitType,t.expense||0]);
+    doc.autoTable({startY:80, head:[columns], body:rows, styles:{fontSize:10}, headStyles:{fillColor:[52,58,64],textColor:255}, alternateRowStyles:{fillColor:[248,249,250]}, didDrawPage:data=>{const pageCount=doc.getNumberOfPages(); doc.setFontSize(10); doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber} / ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height-10);}});
+    doc.save(`gestion_immeubles_${building.nom}.pdf`);
+};
 
-document.getElementById('btnPrint').onclick = ()=>generatePdfOrPrint(true);
-document.getElementById('btnExportPDF').onclick = ()=>generatePdfOrPrint(false);
-
-// Initial render
 renderAll();
 </script>
 </body>
